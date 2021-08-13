@@ -98,14 +98,14 @@ jobs:
             fi
       - destroy-environment
 
-  cleanup:
+  update-cleanup:
     docker:
       - image: alpine/k8s:1.21.2
     steps:
       - run:
           name: remove old cluster
           command: |
-            aws eks update-kubeconfig --name "weather-app-${CIRCLE_WORKFLOW_ID}"
+            aws eks update-kubeconfig --name "geolocator-${CIRCLE_WORKFLOW_ID}"
             export KUBECONFIG=/root/.kube/config
             cluster_name=$(curl -s -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request GET https://api.memstash.io/values/old)
             eksctl delete cluster --name=$cluster_name
@@ -120,5 +120,5 @@ workflows:
           requires: [ build-push ]
       - smoke-test:
           requires: [ create-cluster ]
-      - cleanup:
+      - update-cleanup:
           requires: [ smoke-test ]
