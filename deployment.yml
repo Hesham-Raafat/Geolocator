@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: Geolocator
+  name: geolocator
   labels:
-    app: Geolocator
+    app: geolocator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: Geolocator-app
+      app: geolocator-app
   template:
     metadata:
       labels:
-        app: Geolocator-app
+        app: geolocator-app
     spec:
       containers:
-        - name: Geolocator
+        - name: geolocator
           image: heshamraafat/geolocator
           ports:
             - containerPort: 3000
