@@ -14,7 +14,7 @@ COPY . /app/
 RUN npm i
 
 ## Step 4:
-# Expose port 8080
+# Expose port 3000
 EXPOSE 3000
 
 ## Step 5:
