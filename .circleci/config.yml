@@ -30,7 +30,8 @@ jobs:
           key: linting
   
   build-push:
-    machine: true
+    machine:
+      image: ubuntu-2004:202107-02
     steps:
       - checkout
       - run:
@@ -73,7 +74,7 @@ jobs:
             kubectl apply -f deployment.yml
             kubectl apply -f service.yml
       - run:
-          name: save service url
+          name: save service ip/url
           command: |
             URL=$(kubectl get services geolocator-service --output jsonpath='{.status.loadBalancer.ingress[0].hostname}')
             curl -H "Content-Type: text/plain" -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request PUT --data "http://${URL}:8080" https://api.memstash.io/values/url
@@ -96,7 +97,7 @@ jobs:
             else
               exit 1
             fi
-      - destroy-environment
+      #- destroy-environment
 
   update-cleanup:
     docker:
