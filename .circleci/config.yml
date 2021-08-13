@@ -95,7 +95,7 @@ jobs:
             else
               exit 1
             fi
-      - destroy-environment
+      #- destroy-environment
 
   update-cleanup:
     docker:
