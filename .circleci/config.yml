@@ -1,14 +1,132 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
-# Use a package of configuration called an orb.
-orbs:
-  # Declare a dependency on the welcome-orb
-  welcome: circleci/welcome-orb@0.4.1
-# Orchestrate or schedule a set of jobs
-workflows:
-  # Name the workflow "welcome"
-  welcome:
-    # Run the welcome/run job in its own container
-    jobs:
-      - welcome/run
 
+commands:
+  destroy-environment:
+    description: Destroy environment.
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            aws eks update-kubeconfig --name "Geolocator-${CIRCLE_WORKFLOW_ID}"
+            export KUBECONFIG=/root/.kube/config
+            eksctl delete cluster --name="Geolocator-${CIRCLE_WORKFLOW_ID}"
+jobs:
+  lint:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [ linting ]
+      - run:
+          name: lint code
+          command: |
+            npm i
+            npm install eslint 
+            npm run lint
+      - save_cache:
+          paths: [ node_modules ]
+          key: linting
+  
+  build:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: build image
+          command: |
+            echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
+            docker build -t "heshamraafat/Geolocator" .
+            
+  push:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: push image
+          command: |
+            echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
+            docker push "heshamraafat/Geolocator"
+  
+  create-cluster:
+    docker:
+      - image: alpine/k8s:1.21.2
+    working_directory: /tmp/workspace
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace      
+      - run:
+          name: get old cluster
+          command: |
+            OLD_CLUSTER_ID=$(aws eks list-clusters --query 'clusters[0]' --output text)
+            curl -H "Content-Type: text/plain" -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request PUT --data ${OLD_CLUSTER_ID} https://api.memstash.io/values/old
+      - run:
+          name: create kubernetes cluster
+          command: |
+            eksctl create cluster --name="weather-app-${CIRCLE_WORKFLOW_ID}" \
+            --nodes-min=1 --nodes-max=2 \
+            --node-type=t3.medium \
+            --zones=us-east-1a,us-east-1b
+      - run:
+          name: create kubernetes deployment and service
+          command: |
+            aws eks update-kubeconfig --name "weather-app-${CIRCLE_WORKFLOW_ID}"
+            export KUBECONFIG=/root/.kube/config
+            kubectl create secret docker-registry regcred --docker-username=$DOCKER_USER --docker-password=$DOCKER_PASS --docker-email=hesham.raafat@hotmail.com
+            kubectl apply -f deployment.yml
+            kubectl apply -f service.yml
+      - run:
+          name: save service IP
+          command: |
+            URL=$(kubectl get services Geolocator-service --output jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            curl -H "Content-Type: text/plain" -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request PUT --data "http://${URL}:3000/" https://api.memstash.io/values/service_ip
+  
+  smoke-test:
+    docker:
+      - image: alpine/k8s:1.21.2
+    working_directory: /tmp/workspace
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: smoke test
+          command: |
+            URL=$(curl -s -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request GET https://api.memstash.io/values/service_ip)
+            sleep 3m
+            if curl -s ${URL} | grep "ok"
+            then
+              exit 0
+            else
+              exit 1
+            fi
+      - destroy-environment
+
+  cleanup:
+    docker:
+      - image: alpine/k8s:1.21.2
+    steps:
+      - run:
+          name: remove old cluster
+          command: |
+            aws eks update-kubeconfig --name "weather-app-${CIRCLE_WORKFLOW_ID}"
+            export KUBECONFIG=/root/.kube/config
+            cluster_name=$(curl -s -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request GET https://api.memstash.io/values/old)
+            eksctl delete cluster --name=$cluster_name
+            
+workflows:
+  default:
+    jobs:
+      - lint
+      - build:
+          requires: [ lint ]
+      - push:
+          requires: [ build ]          
+      - create-cluster:
+          requires: [ push ]
+      - smoke-test:
+          requires: [ create-cluster ]
+      - cleanup:
+          requires: [ smoke-test ]
