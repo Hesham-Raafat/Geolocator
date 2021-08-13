@@ -15,7 +15,7 @@ RUN npm i
 
 ## Step 4:
 # Expose port 8080
-EXPOSE 8080
+EXPOSE 3000
 
 ## Step 5:
 # Run start from package.json
