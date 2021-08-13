@@ -1,4 +1,4 @@
-FROM node:13.8.0
+FROM node:16.3-stretch
 
 ## Step 1:
 # Create a working directory
