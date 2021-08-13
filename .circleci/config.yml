@@ -35,12 +35,12 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build image
+          name: build docker image
           command: |
             echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
             docker build -t "heshamraafat/geolocator" .
       - run:
-          name: push image
+          name: push docker image to repo
           command: |
             echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
             docker push "heshamraafat/geolocator"
@@ -63,7 +63,7 @@ jobs:
           command: |
             eksctl create cluster --name="geolocator-${CIRCLE_WORKFLOW_ID}" \
             --nodes-min=1 --nodes-max=2 \
-            --node-type=t3.medium \
+            --node-type=t2.micro \
             --zones=us-east-1a,us-east-1b
       - run:
           name: create kubernetes deployment and service
@@ -85,8 +85,6 @@ jobs:
     working_directory: /tmp/workspace
     steps:
       - checkout
-      - attach_workspace:
-          at: /tmp/workspace
       - run:
           name: smoke test
           command: |
@@ -97,7 +95,7 @@ jobs:
             else
               exit 1
             fi
-      #- destroy-environment
+      - destroy-environment
 
   update-cleanup:
     docker:
