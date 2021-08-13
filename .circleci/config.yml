@@ -29,7 +29,7 @@ jobs:
           paths: [ node_modules ]
           key: linting
   
-  build:
+  build-push:
     machine: true
     steps:
       - checkout
@@ -38,16 +38,11 @@ jobs:
           command: |
             echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
             docker build -t "heshamraafat/geolocator" .
-            
-  push:
-    machine: true
-    steps:
-      - checkout
       - run:
           name: push image
           command: |
             echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
-            docker push "heshamraafat/geolocator:latest"
+            docker push "heshamraafat/geolocator"
   
   create-cluster:
     docker:
