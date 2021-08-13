@@ -47,7 +47,7 @@ jobs:
           name: push image
           command: |
             echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
-            docker push "heshamraafat/geolocator"
+            docker push "heshamraafat/geolocator:latest"
   
   create-cluster:
     docker:
