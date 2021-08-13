@@ -12,8 +12,7 @@ COPY . /app/
 ## Step 3:
 # Install packages package.json
 # Audit fix
-RUN npm i &&\
-    npm audit fix --force
+RUN npm i
 
 ## Step 4:
 # Expose port 3000
