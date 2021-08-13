@@ -37,7 +37,7 @@ jobs:
           name: build image
           command: |
             echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
-            docker build -t "heshamraafat/Geolocator" .
+            docker build -t "heshamraafat/geolocator" .
             
   push:
     machine: true
@@ -47,7 +47,7 @@ jobs:
           name: push image
           command: |
             echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
-            docker push "heshamraafat/Geolocator"
+            docker push "heshamraafat/geolocator"
   
   create-cluster:
     docker:
