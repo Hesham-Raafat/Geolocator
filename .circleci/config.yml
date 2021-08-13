@@ -60,14 +60,14 @@ jobs:
       - run:
           name: create kubernetes cluster
           command: |
-            eksctl create cluster --name="weather-app-${CIRCLE_WORKFLOW_ID}" \
+            eksctl create cluster --name="Geolocator-${CIRCLE_WORKFLOW_ID}" \
             --nodes-min=1 --nodes-max=2 \
             --node-type=t3.medium \
             --zones=us-east-1a,us-east-1b
       - run:
           name: create kubernetes deployment and service
           command: |
-            aws eks update-kubeconfig --name "weather-app-${CIRCLE_WORKFLOW_ID}"
+            aws eks update-kubeconfig --name "Geolocator-${CIRCLE_WORKFLOW_ID}"
             export KUBECONFIG=/root/.kube/config
             kubectl create secret docker-registry regcred --docker-username=$DOCKER_USER --docker-password=$DOCKER_PASS --docker-email=hesham.raafat@hotmail.com
             kubectl apply -f deployment.yml
