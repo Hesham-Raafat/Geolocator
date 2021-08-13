@@ -11,7 +11,6 @@ COPY . /app/
 
 ## Step 3:
 # Install packages package.json
-# Audit fix
 RUN npm i
 
 ## Step 4:
