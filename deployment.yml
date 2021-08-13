@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: Geolocator
-          image: heshamraafat/Geolocator
+          image: heshamraafat/geolocator
           ports:
             - containerPort: 3000
