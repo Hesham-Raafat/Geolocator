@@ -5,7 +5,7 @@ commands:
     description: Destroy environment.
     steps:
       - run:
-          name: Destroy environments
+          name: Destroy environment
           when: on_fail
           command: |
             aws eks update-kubeconfig --name "geolocator-${CIRCLE_WORKFLOW_ID}"
@@ -55,8 +55,8 @@ jobs:
       - run:
           name: get old cluster
           command: |
-            OLD_CLUSTER_ID=$(aws eks list-clusters --query 'clusters[0]' --output text)
-            curl -H "Content-Type: text/plain" -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request PUT --data ${OLD_CLUSTER_ID} https://api.memstash.io/values/old
+            OLD_CLUSTER=$(aws eks list-clusters --query 'clusters[0]' --output text)
+            curl -H "Content-Type: text/plain" -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request PUT --data ${OLD_CLUSTER} https://api.memstash.io/values/old
       - run:
           name: create kubernetes cluster
           command: |
@@ -73,10 +73,10 @@ jobs:
             kubectl apply -f deployment.yml
             kubectl apply -f service.yml
       - run:
-          name: save service IP
+          name: save service url
           command: |
             URL=$(kubectl get services geolocator-service --output jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-            curl -H "Content-Type: text/plain" -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request PUT --data "http://${URL}:3000/" https://api.memstash.io/values/service_ip
+            curl -H "Content-Type: text/plain" -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request PUT --data "http://${URL}:3000/" https://api.memstash.io/values/url
   
   smoke-test:
     docker:
@@ -89,9 +89,8 @@ jobs:
       - run:
           name: smoke test
           command: |
-            URL=$(curl -s -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request GET https://api.memstash.io/values/service_ip)
-            sleep 3m
-            if curl -s ${URL} | grep "ok"
+            URL=$(curl -s -H "token: 5fbf7510-0c03-4949-bd13-99cbc47e5be3" --request GET https://api.memstash.io/values/url)
+            if curl -s ${URL} | grep "address"
             then
               exit 0
             else
