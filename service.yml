@@ -1,10 +1,10 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: Geolocator-service
+  name: geolocator-service
 spec:
   selector:
-    app: Geolocator-app
+    app: geolocator-app
   ports:
   - protocol: TCP
     port: 3000
