@@ -115,12 +115,10 @@ workflows:
   default:
     jobs:
       - lint
-      - build:
-          requires: [ lint ]
-      - push:
-          requires: [ build ]          
+      - build-push:
+          requires: [ lint ]      
       - create-cluster:
-          requires: [ push ]
+          requires: [ build-push ]
       - smoke-test:
           requires: [ create-cluster ]
       - cleanup:
